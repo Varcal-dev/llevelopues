@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProduct, formatPrice } from "@/lib/shopify";
 import BuyBox from "@/components/BuyBox";
+import { shipping } from "@/lib/shipping";
 import "@/components/cart.css";
 
 export const revalidate = 300;
@@ -76,6 +77,11 @@ export default async function ProductPage({ params }: Props) {
         <Link href="/" className="back">Volver</Link>
         <h1>{p.title}</h1>
         <p className="price">{formatPrice(p.price, p.currency)}</p>
+        <p className="pdp-ship">
+          {p.price >= shipping.gratisDesde
+            ? "Envío gratis en este producto"
+            : `Envío gratis desde ${formatPrice(shipping.gratisDesde, p.currency)}`}
+        </p>
         {p.variantId ? <BuyBox variantId={p.variantId} /> : <p className="note">Producto agotado por ahora.</p>}
         {/* HTML de Shopify (viene de tu propio admin). Va en <div>, no en <p>. */}
         <div className="desc" dangerouslySetInnerHTML={{ __html: p.descriptionHtml }} />

@@ -4,6 +4,8 @@ import { cartGet, type Cart } from "@/lib/cart";
 import { formatPrice } from "@/lib/shopify";
 import CartLines from "@/components/CartLines";
 import CartCountSync from "@/components/CartCountSync";
+import FreeShippingBar from "@/components/FreeShippingBar";
+import { shipping, shippingProgress } from "@/lib/shipping";
 import "@/components/cart.css";
 
 export const metadata = { title: "Tu carrito — Llévelo pues" };
@@ -56,10 +58,15 @@ export default async function CartPage() {
             }))}
           />
           <div className="cart-summary">
+            <FreeShippingBar subtotal={cart.subtotal} currency={cart.currency} />
             <p>
               Subtotal <strong>{formatPrice(cart.subtotal, cart.currency)}</strong>
             </p>
-            <p className="cart-hint">El envío se calcula al pagar.</p>
+            <p className="cart-hint">
+              {shippingProgress(cart.subtotal).free
+                ? "Envío gratis incluido."
+                : `Envío: ${formatPrice(shipping.tarifa, cart.currency)}, se confirma al pagar.`}
+            </p>
             <a className="ask" href={cart.checkoutUrl}>Ir a pagar</a>
           </div>
         </>

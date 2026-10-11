@@ -22,3 +22,14 @@
 .cart-qty button:disabled { opacity: 0.4; cursor: default; }
 .cart-summary { margin-top: 32px; padding-top: 20px; border-top: 2px solid color-mix(in srgb, var(--ink) 15%, transparent); display: grid; gap: 10px; justify-items: start; font-size: 1.2rem; }
 .cart-hint { font-size: 0.95rem; }
+
+.ship-bar { margin: 0 0 24px; padding: 14px 16px; border: 2px solid var(--ink); border-radius: 10px; display: grid; gap: 8px; justify-items: start; }
+.ship-bar p { font-size: 1.05rem; }
+.ship-bar small { font-size: 0.85rem; opacity: 0.8; }
+.ship-track { width: 100%; height: 12px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+.ship-track span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.3s ease; }
+.ship-bar.done .ship-track span { background: var(--coral); }
+.ship-more { font-weight: 700; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .ship-track span { transition: none; } }
+
+.pdp-ship { margin-top: 8px; font-weight: 600; font-size: 0.95rem; }
