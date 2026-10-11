@@ -19,22 +19,17 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://llevelopues.com",
   ),
   title: {
-    default: "LlevoPues | Eso que quería, aquí está",
-    template: "%s | LlevoPues",
+    default: "Llévelo pues | Eso que quería, aquí está",
+    template: "%s | Llévelo pues",
   },
   description:
     "Regalos y productos para cada fecha del año, con pago en línea y envío a toda Colombia.",
-  applicationName: "LlevoPues",
-  alternates: {
-    canonical: "/",
-  },
-
+  applicationName: "Llévelo pues",
   openGraph: {
     type: "website",
     locale: "es_CO",
-    url: "/",
-    siteName: "LlevoPues",
-    title: "LlevoPues | Eso que quería, aquí está",
+    siteName: "Llévelo pues",
+    title: "Llévelo pues | Eso que quería, aquí está",
     description:
       "Descubre productos para cada temporada. Eso que quería, aquí está.",
     images: [
@@ -42,14 +37,11 @@ export const metadata: Metadata = {
         url: "/opengraph-image.jpg",
         width: 1200,
         height: 630,
-        alt: "LlevoPues — Eso que quería, aquí está",
+        alt: "Llévelo pues — Eso que quería, aquí está",
       },
     ],
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 };
 
 // En desarrollo, la terminal avisa qué datos reales faltan en lib/site.ts

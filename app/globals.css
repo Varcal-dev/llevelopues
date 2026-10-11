@@ -189,10 +189,54 @@ a {
   color: var(--accent-ink);
   cursor: pointer;
 }
+/* En app/globals.css: REEMPLAZA el bloque .desc actual (el que tiene white-space: pre-line) por esto */
 .desc {
   margin-top: 24px;
   max-width: 60ch;
-  white-space: pre-line;
+}
+.desc > :first-child {
+  margin-top: 0;
+}
+.desc p,
+.desc ul,
+.desc ol,
+.desc h2,
+.desc h3 {
+  margin-top: 14px;
+}
+.desc ul,
+.desc ol {
+  padding-left: 1.25em;
+}
+.desc ul {
+  list-style: disc;
+}
+.desc ol {
+  list-style: decimal;
+}
+.desc h2,
+.desc h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.2;
+}
+.desc a {
+  text-decoration: underline;
+}
+.desc img {
+  max-width: 100%;
+  height: auto;
+}
+.desc table {
+  border-collapse: collapse;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+.desc th,
+.desc td {
+  padding: 6px 10px;
+  border: 1px solid currentColor;
 }
 @media (min-width: 800px) {
   .pdp {
