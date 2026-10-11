@@ -1,0 +1,41 @@
+.wrap-banner { max-width: 1100px; margin: 0 auto 8px; }
+.banner { position: relative; overflow: hidden; display: flex; align-items: center; min-height: 320px; padding: 36px 24px; border-radius: 14px; background: var(--b-bg); color: var(--b-fg); }
+.banner-body { position: relative; z-index: 1; display: grid; gap: 12px; justify-items: start; }
+.banner .kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.banner .chip-b { padding: 4px 12px; border-radius: 999px; background: var(--b-chip); color: var(--b-chip-ink); }
+.banner h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 9vw, 5rem); line-height: 0.95; letter-spacing: -0.03em; max-width: 12ch; }
+.banner .sub { font-size: 1.15rem; max-width: 34ch; }
+.banner .deadline { font-weight: 700; font-size: 0.95rem; }
+.banner .cta { margin-top: 6px; padding: 14px 28px; border-radius: 999px; background: var(--b-fg); color: var(--b-bg); font-weight: 800; }
+.banner .motif { position: absolute; right: -24px; bottom: -36px; width: min(52vw, 400px); color: var(--b-fg); opacity: 0.2; pointer-events: none; }
+@media (min-width: 800px) { .banner { padding: 56px 56px; min-height: 380px; } }
+
+/* Banner con foto: celular = foto arriba y texto abajo; escritorio = texto sobre la zona despejada de la foto */
+.banner.has-photo { display: block; padding: 0; min-height: 0; }
+.banner.has-photo .banner-photo { position: relative; aspect-ratio: 16 / 9; }
+.banner.has-photo .banner-photo img { object-fit: cover; object-position: left center; }
+.banner.has-photo .banner-body { padding: 24px 24px 28px; }
+@media (min-width: 800px) {
+  .banner.has-photo { min-height: 460px; display: flex; align-items: center; }
+  .banner.has-photo .banner-photo { position: absolute; inset: 0; aspect-ratio: auto; }
+  .banner.has-photo .banner-photo img { object-position: left 30%; }
+  .banner.has-photo .banner-body { margin-left: auto; width: 42%; padding: 40px 44px 40px 0; }
+  .banner.has-photo h1 { font-size: clamp(2.4rem, 4.6vw, 4rem); }
+  /* Black Friday: la foto tiene una franja amarilla a la derecha; el texto claro no debe cruzarla */
+  .banner.tone-light .banner-body { padding-right: 150px; }
+}
+
+/* Tarjeta de cuenta regresiva: en celular va al final del panel; en escritorio flota abajo a la derecha */
+.cd-card { position: relative; z-index: 2; margin: 0 24px 24px; padding: 14px 18px; border-radius: 16px; background: #fff; color: #2e241e; box-shadow: 0 8px 24px rgb(0 0 0 / 0.14); text-align: center; }
+.banner:not(.has-photo) .cd-card { margin: 0; position: absolute; right: 16px; bottom: 16px; }
+.cd-label { font-size: 0.9rem; line-height: 1.3; }
+.cd-label strong { display: block; font-family: var(--font-display); font-size: 1.1rem; }
+.cd-cells { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
+.cd-cells div { display: grid; min-width: 42px; }
+.cd-cells b { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.cd-cells small { font-size: 0.72rem; opacity: 0.7; }
+@media (min-width: 800px) {
+  .banner.has-photo { min-height: 520px; align-items: flex-start; }
+  .banner.has-photo .banner-body { padding-top: 56px; }
+  .cd-card { position: absolute; right: 28px; bottom: 28px; margin: 0; }
+}

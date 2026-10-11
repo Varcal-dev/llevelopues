@@ -1,0 +1,27 @@
+.site-header { margin-bottom: 16px; background: var(--bg); border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+.hd { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-top: 10px; padding-bottom: 10px; }
+.hd .logo { margin-right: auto; }
+.hd-nav { display: none; }
+.hd-nav a { font-weight: 700; font-size: 0.95rem; padding: 6px 2px; border-bottom: 2px solid transparent; }
+.hd-nav a:hover { border-bottom-color: var(--accent); }
+
+.hd-search { order: 5; flex: 1 0 100%; display: flex; align-items: center; background: color-mix(in srgb, var(--ink) 6%, var(--bg)); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 999px; padding: 2px 4px 2px 16px; }
+.hd-search input { flex: 1; min-width: 0; font: inherit; color: inherit; background: transparent; border: 0; outline: 0; padding: 8px 0; }
+.hd-search button { display: inline-flex; padding: 8px; background: transparent; border: 0; color: inherit; cursor: pointer; border-radius: 999px; }
+.hd-search:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Menú de celular */
+.hd-menu { order: -1; position: relative; }
+.hd-menu summary { list-style: none; display: inline-flex; padding: 8px; cursor: pointer; border-radius: 999px; }
+.hd-menu summary::-webkit-details-marker { display: none; }
+.hd-drop { position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; display: grid; min-width: 220px; padding: 8px; background: var(--bg); border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent); border-radius: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.12); }
+.hd-drop a { padding: 12px 14px; font-weight: 700; border-radius: 8px; }
+.hd-drop a:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+
+@media (min-width: 900px) {
+  .hd { flex-wrap: nowrap; padding-top: 12px; padding-bottom: 12px; }
+  .hd .logo { margin-right: 0; }
+  .hd-menu { display: none; }
+  .hd-nav { display: flex; gap: 22px; margin: 0 auto; }
+  .hd-search { order: 0; flex: 0 1 280px; }
+}

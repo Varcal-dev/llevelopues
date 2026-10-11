@@ -1,69 +1,104 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { EVERGREEN, getActiveSeason, listSeasons } from "@/lib/seasons";
+import { getCollectionProducts, type Product } from "@/lib/shopify";
+import { fechaDeCorte } from "@/lib/corte";
+import { site } from "@/lib/site";
+import GiftFilter, { type FilterGroup } from "@/components/GiftFilter";
+import ProductCard from "@/components/ProductCard";
+import SeasonBanner from "@/components/SeasonBanner";
+import SeasonCards from "@/components/SeasonCards";
+import CategoryRow from "@/components/CategoryRow";
+import BudgetRow from "@/components/BudgetRow";
+import TrustStrip from "@/components/TrustStrip";
+import "./home.css";
+import "@/components/home-sections.css";
 
-export default function Home() {
+export const revalidate = 3600; // la temporada se recalcula cada hora
+
+const toItems = (ps: Product[]) =>
+  ps.map((p) => ({ id: p.id, tags: p.tags, node: <ProductCard p={p} /> }));
+
+export default async function Home() {
+  const { season, target } = getActiveSeason();
+  const onlyEvergreen = season.slug === EVERGREEN.slug;
+  let seasonal: Product[] = [];
+  let always: Product[] = [];
+  let failed = false;
+  try {
+    const [s, a] = await Promise.all([
+      onlyEvergreen
+        ? Promise.resolve([] as Product[])
+        : getCollectionProducts(season.slug),
+      getCollectionProducts(EVERGREEN.slug),
+    ]);
+    const seen = new Set(s.map((p) => p.id));
+    seasonal = s;
+    always = a.filter((p) => !seen.has(p.id)); // sin duplicados si un producto está en ambas colecciones
+  } catch {
+    failed = true;
+  }
+
+  const groups: FilterGroup[] = [
+    { title: season.name, items: toItems(seasonal) },
+    { title: EVERGREEN.name, items: toItems(always) },
+  ].filter((g) => g.items.length > 0);
+
+  const slot = onlyEvergreen
+    ? undefined
+    : listSeasons().find((s) => s.season.slug === season.slug);
+  const corte = slot ? fechaDeCorte(season.slug, slot.event) : null;
+  const deadline = corte
+    ? corte.pasado
+      ? "La fecha límite para recibirlo a tiempo ya pasó."
+      : `Haz tu pedido hasta el ${corte.texto} para recibirlo a tiempo.`
+    : undefined;
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main>
+      <section className="wrap">
+        <SeasonBanner season={season} target={target} deadline={deadline} href="#productos" />
+      </section>
+
+      <div className="wrap">
+        <CategoryRow />
+        <TrustStrip row />
+      </div>
+
+      <section className="wrap" id="productos">
+        {failed ? (
+          <p className="note">
+            No pudimos cargar los productos. Revisa las variables de entorno de
+            Shopify.
           </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        ) : groups.length === 0 ? (
+          <p className="note">
+            Aún no hay productos. Crea las colecciones «{season.slug}» y «
+            {EVERGREEN.slug}» en Shopify, agrega productos y publícalas en el
+            canal Headless.
+          </p>
+        ) : (
+          <GiftFilter groups={groups} />
+        )}
+      </section>
+
+      <BudgetRow />
+
+      {site.historia.length > 0 && (
+        <section className="wrap prose">
+          <h2 className="section-title">Quién está detrás</h2>
+          <p>{site.historia[0]}</p>
+          <p>
+            <Link className="ask" href="/quienes-somos">
+              Conoce nuestra historia
+            </Link>
+          </p>
+        </section>
+      )}
+
+      <section className="wrap" id="temporadas">
+        <h2 className="section-title">Colecciones por temporada</h2>
+        <SeasonCards />
+      </section>
+    </main>
   );
 }
