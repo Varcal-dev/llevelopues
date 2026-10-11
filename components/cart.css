@@ -37,3 +37,9 @@
 .ship-add { margin-top: 28px; }
 .ship-add h2 { font-size: 1.2rem; margin: 0 0 12px; }
 .ship-add .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+
+.pdp .variants { border: 0; padding: 0; margin: 20px 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.pdp .variants legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.pdp .variants button { font: inherit; font-weight: 700; padding: 10px 16px; border: 2px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+.pdp .variants button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pdp .variants button:disabled { opacity: 0.4; text-decoration: line-through; cursor: not-allowed; }
