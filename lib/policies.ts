@@ -1,4 +1,7 @@
 import { site } from "@/lib/site";
+import { shippingPolicyText } from "@/lib/shipping";
+
+const cop = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 // BORRADORES. Antes de lanzar, que un abogado los revise y ajuste a lo que realmente haces (marca site.legalRevisado = true).
 export type Policy = { slug: string; title: string; body: () => string[] };
@@ -20,6 +23,7 @@ export const POLICIES: Policy[] = [
         site.entregaDias
           ? `El tiempo estimado de entrega es de ${site.entregaDias[0]} a ${site.entregaDias[1]} días hábiles desde la confirmación del pago. Es un estimado y puede variar según la ciudad y la transportadora.`
           : "El tiempo de entrega varía según la ciudad y la transportadora.",
+        shippingPolicyText(cop),
         site.rastreo && "Cuando tu pedido sale, te enviamos el número de guía para que puedas seguirlo.",
         `Si tienes dudas sobre tu pedido, escríbenos ${canal()}.`,
       ]),

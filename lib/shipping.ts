@@ -19,3 +19,23 @@ export function shippingProgress(subtotal: number): ShippingProgress {
     percent: Math.min(100, Math.round((subtotal / shipping.gratisDesde) * 100)),
   };
 }
+
+/** Texto de la política, para que las páginas legales digan siempre lo mismo que la barra. */
+export const shippingPolicyText = (fmt: (n: number) => string) =>
+  `El envío cuesta ${fmt(shipping.tarifa)}. Si tu compra es de ${fmt(shipping.gratisDesde)} o más, el envío es gratis.`;
+
+/**
+ * Productos para completar el envío gratis: los que no están en el carrito y cuyo precio
+ * queda más cerca de lo que falta (uno solo que cubra la diferencia, o el que más se acerque).
+ */
+export function pickAddOns<T extends { handle: string; price: number }>(
+  products: T[],
+  inCart: Set<string>,
+  missing: number,
+  max = 3,
+): T[] {
+  return products
+    .filter((p) => !inCart.has(p.handle) && p.price > 0)
+    .sort((a, b) => Math.abs(a.price - missing) - Math.abs(b.price - missing))
+    .slice(0, max);
+}

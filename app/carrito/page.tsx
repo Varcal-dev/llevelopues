@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { cartGet, type Cart } from "@/lib/cart";
-import { formatPrice } from "@/lib/shopify";
+import { formatPrice, type Product } from "@/lib/shopify";
+import { getAllProducts } from "@/lib/catalogo";
 import CartLines from "@/components/CartLines";
 import CartCountSync from "@/components/CartCountSync";
 import FreeShippingBar from "@/components/FreeShippingBar";
-import { shipping, shippingProgress } from "@/lib/shipping";
+import ShippingAddOns from "@/components/ShippingAddOns";
+import { pickAddOns, shipping, shippingProgress } from "@/lib/shipping";
 import "@/components/cart.css";
 
 export const metadata = { title: "Tu carrito — Llévelo pues" };
@@ -24,6 +26,17 @@ export default async function CartPage() {
   const sinStock = cart ? cart.lines.filter((l) => l.quantity === 0) : [];
   if (cart && sinStock.length > 0) {
     cart = { ...cart, lines: cart.lines.filter((l) => l.quantity > 0) };
+  }
+
+  // Sugerencias para llegar al envío gratis (si falla Shopify, simplemente no se muestran).
+  const progress = cart && cart.lines.length > 0 ? shippingProgress(cart.subtotal) : null;
+  let addOns: Product[] = [];
+  if (cart && progress && !progress.free) {
+    try {
+      addOns = pickAddOns(await getAllProducts(), new Set(cart.lines.map((l) => l.handle)), progress.missing);
+    } catch {
+      addOns = [];
+    }
   }
 
   return (
@@ -69,6 +82,9 @@ export default async function CartPage() {
             </p>
             <a className="ask" href={cart.checkoutUrl}>Ir a pagar</a>
           </div>
+          {progress && !progress.free && (
+            <ShippingAddOns products={addOns} missing={progress.missing} currency={cart.currency} />
+          )}
         </>
       )}
     </main>

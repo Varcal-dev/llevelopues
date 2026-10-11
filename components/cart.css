@@ -33,3 +33,7 @@
 @media (prefers-reduced-motion: reduce) { .ship-track span { transition: none; } }
 
 .pdp-ship { margin-top: 8px; font-weight: 600; font-size: 0.95rem; }
+
+.ship-add { margin-top: 28px; }
+.ship-add h2 { font-size: 1.2rem; margin: 0 0 12px; }
+.ship-add .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
