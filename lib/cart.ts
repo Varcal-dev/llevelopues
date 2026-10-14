@@ -11,10 +11,24 @@ export type CartLine = {
   image: string | null;
   alt: string;
   unitPrice: number;
-  total: number;
+  subtotal: number; // de la línea, antes del descuento
+  discount: number; // lo que descuenta un código en esta línea (0 si no hay)
+  total: number; // subtotal − discount
   currency: string;
 };
-export type Cart = { id: string; checkoutUrl: string; count: number; subtotal: number; currency: string; lines: CartLine[]; warnings: string[] };
+export type CartCode = { code: string; applicable: boolean }; // applicable=false: Shopify no lo acepta para este carrito
+export type Cart = {
+  id: string;
+  checkoutUrl: string;
+  count: number;
+  subtotal: number; // suma de las líneas ANTES de descuentos
+  discount: number; // total descontado por códigos
+  total: number; // subtotal − discount: es sobre lo que Shopify mide el envío gratis
+  currency: string;
+  codes: CartCode[];
+  lines: CartLine[];
+  warnings: string[];
+};
 
 type Money = { amount: string; currencyCode: string };
 type RawCart = {
@@ -22,11 +36,13 @@ type RawCart = {
   checkoutUrl: string;
   totalQuantity: number;
   cost: { subtotalAmount: Money };
+  discountCodes: { code: string; applicable: boolean }[];
   lines: {
     nodes: {
       id: string;
       quantity: number;
-      cost: { totalAmount: Money };
+      cost: { subtotalAmount: Money; totalAmount: Money };
+      discountAllocations: { discountedAmount: Money }[];
       merchandise: { title?: string; price?: Money; image?: { url: string; altText: string | null } | null; product?: { title: string; handle: string } };
     }[];
   };
@@ -49,33 +65,50 @@ async function gql<T>(query: string, variables: Record<string, unknown>): Promis
 const FIELDS = `
   id checkoutUrl totalQuantity
   cost { subtotalAmount { amount currencyCode } }
+  discountCodes { code applicable }
   lines(first: 50) {
     nodes {
       id quantity
-      cost { totalAmount { amount currencyCode } }
+      cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
+      discountAllocations { discountedAmount { amount currencyCode } }
       merchandise { ... on ProductVariant { title price { amount currencyCode } image { url altText } product { title handle } } }
     }
   }`;
 
-const toCart = (c: RawCart, warnings: string[] = []): Cart => ({
-  warnings,
-  id: c.id,
-  checkoutUrl: c.checkoutUrl,
-  count: c.totalQuantity,
-  subtotal: Number(c.cost.subtotalAmount.amount),
-  currency: c.cost.subtotalAmount.currencyCode,
-  lines: c.lines.nodes.map((l) => ({
-    id: l.id,
-    quantity: l.quantity,
-    title: l.merchandise.product?.title ?? l.merchandise.title ?? "Producto",
-    handle: l.merchandise.product?.handle ?? "",
-    image: l.merchandise.image?.url ?? null,
-    alt: l.merchandise.image?.altText ?? l.merchandise.product?.title ?? "",
-    unitPrice: Number(l.merchandise.price?.amount ?? 0),
-    total: Number(l.cost.totalAmount.amount),
-    currency: l.cost.totalAmount.currencyCode,
-  })),
-});
+const toCart = (c: RawCart, warnings: string[] = []): Cart => {
+  const lines: CartLine[] = c.lines.nodes.map((l) => {
+    // Los montos se calculan con subtotal − descuentos (no con cost.totalAmount) para que cuadren siempre entre sí.
+    const subtotal = Number(l.cost.subtotalAmount.amount);
+    const discount = l.discountAllocations.reduce((s, a) => s + Number(a.discountedAmount.amount), 0);
+    return {
+      id: l.id,
+      quantity: l.quantity,
+      title: l.merchandise.product?.title ?? l.merchandise.title ?? "Producto",
+      handle: l.merchandise.product?.handle ?? "",
+      image: l.merchandise.image?.url ?? null,
+      alt: l.merchandise.image?.altText ?? l.merchandise.product?.title ?? "",
+      unitPrice: Number(l.merchandise.price?.amount ?? 0),
+      subtotal,
+      discount,
+      total: Math.max(0, subtotal - discount),
+      currency: l.cost.totalAmount.currencyCode,
+    };
+  });
+  const subtotal = lines.reduce((s, l) => s + l.subtotal, 0);
+  const discount = lines.reduce((s, l) => s + l.discount, 0);
+  return {
+    warnings,
+    id: c.id,
+    checkoutUrl: c.checkoutUrl,
+    count: c.totalQuantity,
+    subtotal,
+    discount,
+    total: Math.max(0, subtotal - discount),
+    currency: c.cost.subtotalAmount.currencyCode,
+    codes: c.discountCodes,
+    lines,
+  };
+};
 
 // Ejecuta una mutación y devuelve el carrito; null si el carrito ya no existe (expiró).
 async function mutate(field: string, query: string, vars: Record<string, unknown>): Promise<Cart | null> {
@@ -121,4 +154,12 @@ export const cartRemove = (id: string, lineId: string) =>
     "cartLinesRemove",
     `mutation ($id: ID!, $lineIds: [ID!]!) { cartLinesRemove(cartId: $id, lineIds: $lineIds) { cart { ${FIELDS} } userErrors { message } warnings { code message } } }`,
     { id, lineIds: [lineId] },
+  );
+
+/** REEMPLAZA los códigos del carrito por la lista dada ([] los quita todos). Los códigos no distinguen mayúsculas. */
+export const cartSetCodes = (id: string, codes: string[]) =>
+  mutate(
+    "cartDiscountCodesUpdate",
+    `mutation ($id: ID!, $codes: [String!]!) { cartDiscountCodesUpdate(cartId: $id, discountCodes: $codes) { cart { ${FIELDS} } userErrors { message } warnings { code message } } }`,
+    { id, codes },
   );

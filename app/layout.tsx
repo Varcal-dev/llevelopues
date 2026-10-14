@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Baloo_2, Karla } from "next/font/google";
 import { getActiveSeason } from "@/lib/seasons";
 import { missingSiteFields } from "@/lib/site";
+import { ahora, promosVigentes } from "@/lib/promos";
 import Header from "@/components/Header";
+import PromoBar from "@/components/PromoBar";
 import SiteFooter from "@/components/SiteFooter";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
@@ -58,6 +60,9 @@ export default function RootLayout({
 }) {
   // La piel de la marca no cambia: página siempre crema con tinta café. De la temporada solo se toman los acentos (botones, etiquetas).
   const { theme } = getActiveSeason().season;
+  // Promos que aún no vencen; el navegador decide con su reloj cuáles mostrar (las páginas viven en caché).
+  const renderedAt = ahora();
+  const promos = promosVigentes(renderedAt);
   const vars = {
     "--bg": "#FAF6EC",
     "--ink": "#2E241E",
@@ -67,6 +72,7 @@ export default function RootLayout({
   return (
     <html lang="es-CO" className={`${display.variable} ${body.variable}`}>
       <body style={vars}>
+        <PromoBar promos={promos} renderedAt={renderedAt} />
         <Header />
         {children}
         <SiteFooter />

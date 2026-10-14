@@ -15,7 +15,7 @@ export type Product = {
   tags: string[]; // etiquetas de Shopify, ej. "para-mama"
 };
 
-async function storefront<T>(
+export async function storefront<T>(
   query: string,
   variables: Record<string, unknown>,
   fresh = false,
@@ -171,24 +171,35 @@ export const getProduct = cache(
 );
 
 const CART_CREATE = `
-  mutation ($lines: [CartLineInput!]!) {
-    cartCreate(input: { lines: $lines }) {
+  mutation ($lines: [CartLineInput!]!, $codes: [String!]) {
+    cartCreate(input: { lines: $lines, discountCodes: $codes }) {
       cart { checkoutUrl }
       userErrors { message }
     }
   }`;
 
-/** Crea un carrito con una línea y devuelve la URL del checkout de Shopify. */
+/**
+ * Crea un carrito con una línea y devuelve la URL del checkout de Shopify.
+ * Si se pasa un código de descuento, el checkout ya lo trae aplicado (Shopify solo lo aplica a los productos que cubre).
+ */
 export async function createCheckout(
   variantId: string,
   quantity: number,
+  discountCode?: string,
 ): Promise<string> {
   const data = await storefront<{
     cartCreate: {
       cart: { checkoutUrl: string } | null;
       userErrors: { message: string }[];
     };
-  }>(CART_CREATE, { lines: [{ merchandiseId: variantId, quantity }] }, true);
+  }>(
+    CART_CREATE,
+    {
+      lines: [{ merchandiseId: variantId, quantity }],
+      codes: discountCode ? [discountCode] : [],
+    },
+    true,
+  );
   const url = data?.cartCreate.cart?.checkoutUrl;
   if (!url)
     throw new Error(

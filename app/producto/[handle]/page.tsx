@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProduct } from "@/lib/shopify";
+import { promosDeProducto } from "@/lib/promo-catalogo";
+import { ahora } from "@/lib/promos";
 import BuyBox from "@/components/BuyBox";
 import { shipping } from "@/lib/shipping";
 import "@/components/cart.css";
@@ -46,6 +48,7 @@ export default async function ProductPage({ params }: Props) {
   const { handle } = await params;
   const p = await getProduct(handle);
   if (!p) notFound();
+  const promos = await promosDeProducto(p.handle); // promos de las colecciones a las que pertenece este producto
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -78,7 +81,7 @@ export default async function ProductPage({ params }: Props) {
         <Link href="/" className="back">Volver</Link>
         <h1>{p.title}</h1>
         {p.available ? (
-          <BuyBox variants={p.variants} currency={p.currency} freeFrom={shipping.gratisDesde} />
+          <BuyBox variants={p.variants} currency={p.currency} freeFrom={shipping.gratisDesde} promos={promos} renderedAt={ahora()} />
         ) : (
           <p className="note">Producto agotado por ahora.</p>
         )}

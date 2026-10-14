@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import Countdown from "@/components/Countdown";
 import GiftFilter from "@/components/GiftFilter";
 import ProductCard from "@/components/ProductCard";
+import PromoStrip from "@/components/PromoStrip";
 import SeasonNav from "@/components/SeasonNav";
+import { ahora, promosVigentes } from "@/lib/promos";
 import { fechaDeCorte } from "@/lib/corte";
 import { EVERGREEN, SEASONS, getActiveSeason, getSeason, listSeasons } from "@/lib/seasons";
 import { getCollectionProducts, type Product } from "@/lib/shopify";
@@ -21,6 +23,7 @@ export default async function SeasonPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const season = getSeason(slug);
   if (!season) notFound();
+  const renderedAt = ahora();
 
   const active = getActiveSeason();
   const isActive = active.season.slug === slug;
@@ -65,6 +68,8 @@ export default async function SeasonPage({ params }: { params: Promise<{ slug: s
         </section>
 
         <section className="wrap">
+          {/* Solo la promo de esta colección (slug de la temporada = handle de la colección). */}
+          <PromoStrip promos={promosVigentes(renderedAt).filter((p) => p.coleccion === slug)} renderedAt={renderedAt} enlace={false} />
           {failed ? (
             <p className="note">No pudimos cargar los productos. Revisa las variables de entorno de Shopify.</p>
           ) : products.length === 0 ? (

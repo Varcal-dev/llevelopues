@@ -3,8 +3,10 @@ import { EVERGREEN, getActiveSeason, listSeasons } from "@/lib/seasons";
 import { getCollectionProducts, type Product } from "@/lib/shopify";
 import { fechaDeCorte } from "@/lib/corte";
 import { site } from "@/lib/site";
+import { ahora, promosVigentes } from "@/lib/promos";
 import GiftFilter, { type FilterGroup } from "@/components/GiftFilter";
 import ProductCard from "@/components/ProductCard";
+import PromoStrip from "@/components/PromoStrip";
 import SeasonBanner from "@/components/SeasonBanner";
 import SeasonCards from "@/components/SeasonCards";
 import CategoryRow from "@/components/CategoryRow";
@@ -19,6 +21,7 @@ const toItems = (ps: Product[]) =>
   ps.map((p) => ({ id: p.id, tags: p.tags, node: <ProductCard p={p} /> }));
 
 export default async function Home() {
+  const renderedAt = ahora();
   const { season, target } = getActiveSeason();
   const onlyEvergreen = season.slug === EVERGREEN.slug;
   let seasonal: Product[] = [];
@@ -62,6 +65,11 @@ export default async function Home() {
       <div className="wrap">
         <CategoryRow />
         <TrustStrip row />
+      </div>
+
+      <div className="wrap">
+        {/* Todas las promos vigentes o por empezar (el navegador filtra por la hora real). */}
+        <PromoStrip promos={promosVigentes(renderedAt)} renderedAt={renderedAt} />
       </div>
 
       <section className="wrap" id="productos">

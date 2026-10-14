@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { addToCart } from "@/lib/cart-actions";
 import { buyNow } from "@/lib/actions";
 import { notifyCart } from "@/lib/cart-client";
+import { faseDe, precioConCodigo, textoAlcance, textoFecha, type Promo } from "@/lib/promos";
+import CopyCode from "./CopyCode";
+import { usePromoClock } from "./usePromoClock";
+import "./promo.css";
 
 export type BuyVariant = { id: string; title: string; price: number; available: boolean };
 
@@ -11,10 +15,14 @@ export default function BuyBox({
   variants,
   currency,
   freeFrom,
+  promos = [],
+  renderedAt,
 }: {
   variants: BuyVariant[];
   currency: string;
   freeFrom: number; // monto desde el cual el envío es gratis
+  promos?: Promo[]; // promos cuya colección incluye este producto
+  renderedAt: number; // hora del servidor al renderizar (el navegador la corrige con su reloj)
 }) {
   const multi = variants.length > 1; // un producto sin opciones trae una sola variante "Default Title"
   const [sel, setSel] = useState((variants.find((v) => v.available) ?? variants[0]).id);
@@ -23,6 +31,11 @@ export default function BuyBox({
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+
+  const now = usePromoClock(renderedAt);
+  const activa = promos.find((p) => faseDe(p, now) === "activa");
+  const aviso = activa ? undefined : promos.find((p) => faseDe(p, now) === "aviso");
+  const conCodigo = activa ? precioConCodigo(v.price, activa.porcentaje) : v.price;
 
   const money = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
@@ -37,9 +50,39 @@ export default function BuyBox({
   return (
     <>
       <p className="price">{money(v.price)}</p>
+      {/* Shopify mide el envío gratis sobre el total con descuento: con el código, el precio que cuenta es el rebajado. */}
       <p className="pdp-ship">
-        {v.price >= freeFrom ? "Envío gratis en este producto" : `Envío gratis desde ${money(freeFrom)}`}
+        {conCodigo >= freeFrom ? "Envío gratis en este producto" : `Envío gratis desde ${money(freeFrom)}`}
       </p>
+
+      {activa && (
+        <div className="promo-box">
+          <p className="promo-title">{activa.porcentaje}% menos con el código</p>
+          <div className="promo-code-row">
+            <code className="promo-code">{activa.codigo}</code>
+            <CopyCode codigo={activa.codigo} />
+          </div>
+          <p className="promo-now">
+            Pagas <strong>{money(conCodigo)}</strong> por unidad
+          </p>
+          <p className="promo-fine">
+            Con «Comprar ahora» se aplica solo. Si lo agregas al carrito, escríbelo allí. Válido en {textoAlcance(activa)} hasta el {textoFecha(activa.hasta)}.
+          </p>
+        </div>
+      )}
+      {aviso && (
+        <div className="promo-box">
+          <p className="promo-title">
+            Desde el {textoFecha(aviso.desde)}: {aviso.porcentaje}% menos con el código
+          </p>
+          <div className="promo-code-row">
+            <code className="promo-code">{aviso.codigo}</code>
+          </div>
+          <p className="promo-fine">
+            Válido en {textoAlcance(aviso)} del {textoFecha(aviso.desde)} al {textoFecha(aviso.hasta)}.
+          </p>
+        </div>
+      )}
 
       {multi && (
         <fieldset className="variants">
@@ -69,6 +112,7 @@ export default function BuyBox({
         <form action={buyNow}>
           <input type="hidden" name="variantId" value={v.id} />
           <input type="hidden" name="qty" value={qty} />
+          <input type="hidden" name="code" value={activa?.codigo ?? ""} />
           <button type="submit" className="ghost" disabled={!v.available}>Comprar ahora</button>
         </form>
         {msg && (

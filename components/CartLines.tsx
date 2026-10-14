@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { removeLine, updateLine, type CartResult } from "@/lib/cart-actions";
 import { notifyCart } from "@/lib/cart-client";
+import "./promo.css";
 
 export type CartLineView = {
   id: string;
@@ -13,7 +14,8 @@ export type CartLineView = {
   image: string | null;
   alt: string;
   unit: string; // precio unitario ya formateado
-  total: string; // total de la línea ya formateado
+  total: string; // total de la línea ya formateado (con descuento si lo hay)
+  original?: string; // total de la línea ANTES del descuento; solo viene si hay descuento
 };
 
 export default function CartLines({ lines }: { lines: CartLineView[] }) {
@@ -52,7 +54,10 @@ export default function CartLines({ lines }: { lines: CartLineView[] }) {
                 <button type="button" className="link" disabled={pending} onClick={() => run(() => removeLine(l.id))}>Quitar</button>
               </div>
             </div>
-            <strong>{l.total}</strong>
+            <strong>
+              {l.original && <s className="cart-was">{l.original}</s>}
+              {l.total}
+            </strong>
           </li>
         ))}
       </ul>

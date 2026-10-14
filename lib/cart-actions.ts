@@ -1,6 +1,7 @@
 "use server";
 import { cookies } from "next/headers";
 import * as cart from "@/lib/cart";
+import { explicarCodigo } from "@/lib/promos";
 
 const ID = "llp_cart"; // httpOnly: el id del carrito
 const COUNT = "llp_count"; // legible por el navegador: solo la cantidad, para el globito del header
@@ -63,6 +64,45 @@ export async function removeLine(lineId: string): Promise<CartResult> {
     const id = (await cookies()).get(ID)?.value;
     if (!id) return FAIL;
     await save(await cart.cartRemove(id, lineId));
+    return { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+/**
+ * Aplica un código de cupón al carrito. Shopify no da error con un código malo: lo deja con applicable=false.
+ * En ese caso se restauran los códigos que ya había (los que sí servían) y se explica por qué no sirvió.
+ */
+export async function applyCoupon(raw: string): Promise<CartResult> {
+  const code = String(raw ?? "").replace(/\s+/g, "").toUpperCase().slice(0, 40);
+  if (!code) return { ok: false, error: "Escribe tu código." };
+  try {
+    const id = (await cookies()).get(ID)?.value;
+    if (!id) return FAIL;
+    const before = await cart.cartGet(id);
+    if (!before) return FAIL;
+    const previous = before.codes.filter((c) => c.applicable).map((c) => c.code);
+
+    const after = await cart.cartSetCodes(id, [code]);
+    if (!after) return FAIL;
+    const applied = after.codes.find((c) => c.code.toUpperCase() === code);
+    if (!applied?.applicable) {
+      await cart.cartSetCodes(id, previous);
+      return { ok: false, error: explicarCodigo(code) ?? "Ese código no existe, ya venció o no aplica a los productos de tu carrito." };
+    }
+    await save(after);
+    return { ok: true };
+  } catch {
+    return FAIL;
+  }
+}
+
+export async function removeCoupon(): Promise<CartResult> {
+  try {
+    const id = (await cookies()).get(ID)?.value;
+    if (!id) return FAIL;
+    await save(await cart.cartSetCodes(id, []));
     return { ok: true };
   } catch {
     return FAIL;
