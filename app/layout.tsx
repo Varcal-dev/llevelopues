@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Baloo_2, Karla } from "next/font/google";
+import Script from "next/script";
 import { getActiveSeason } from "@/lib/seasons";
 import { missingSiteFields } from "@/lib/site";
 import { ahora, promosVigentes } from "@/lib/promos";
@@ -7,7 +9,10 @@ import Header from "@/components/Header";
 import PromoBar from "@/components/PromoBar";
 import SiteFooter from "@/components/SiteFooter";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import MetaPixel from "@/components/MetaPixel";
 import "./globals.css";
+
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 const display = Baloo_2({
   subsets: ["latin"],
@@ -46,7 +51,6 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-// En desarrollo, la terminal avisa qué datos reales faltan en lib/site.ts
 if (process.env.NODE_ENV === "development") {
   const missing = missingSiteFields();
   if (missing.length > 0)
@@ -58,9 +62,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // La piel de la marca no cambia: página siempre crema con tinta café. De la temporada solo se toman los acentos (botones, etiquetas).
   const { theme } = getActiveSeason().season;
-  // Promos que aún no vencen; el navegador decide con su reloj cuáles mostrar (las páginas viven en caché).
   const renderedAt = ahora();
   const promos = promosVigentes(renderedAt);
   const vars = {
@@ -72,6 +74,37 @@ export default function RootLayout({
   return (
     <html lang="es-CO" className={`${display.variable} ${body.variable}`}>
       <body style={vars}>
+        {PIXEL_ID && (
+          <>
+            {/* Solo carga e inicializa. El PageView lo dispara <MetaPixel /> en cada ruta. */}
+            <Script id="meta-pixel" strategy="beforeInteractive">
+              {`
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window, document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '${PIXEL_ID}');
+              `}
+            </Script>
+            <Suspense fallback={null}>
+              <MetaPixel />
+            </Suspense>
+            <noscript>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                height="1"
+                width="1"
+                style={{ display: "none" }}
+                alt=""
+                src={`https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1`}
+              />
+            </noscript>
+          </>
+        )}
         <PromoBar promos={promos} renderedAt={renderedAt} />
         <Header />
         {children}

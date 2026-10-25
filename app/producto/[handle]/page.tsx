@@ -7,6 +7,7 @@ import { ahora } from "@/lib/promos";
 import BuyBox from "@/components/BuyBox";
 import { shipping } from "@/lib/shipping";
 import "@/components/cart.css";
+import MetaPixelEvent from "@/components/MetaPixelEvent";
 
 export const revalidate = 300;
 
@@ -48,6 +49,7 @@ export default async function ProductPage({ params }: Props) {
   const { handle } = await params;
   const p = await getProduct(handle);
   if (!p) notFound();
+  const productId = p.id.split("/").pop()!;
   const promos = await promosDeProducto(p.handle); // promos de las colecciones a las que pertenece este producto
 
   const jsonLd = {
@@ -67,6 +69,18 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <main className="wrap pdp">
+      {p.variants.length > 0 && (
+  <MetaPixelEvent
+    event="ViewContent"
+    params={{
+      content_name: p.title,
+      content_ids: [productId],
+      content_type: "product",
+      value: p.variants[0].price,
+      currency: p.currency,
+    }}
+  />
+)}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
@@ -81,7 +95,8 @@ export default async function ProductPage({ params }: Props) {
         <Link href="/" className="back">Volver</Link>
         <h1>{p.title}</h1>
         {p.available ? (
-          <BuyBox variants={p.variants} currency={p.currency} freeFrom={shipping.gratisDesde} promos={promos} renderedAt={ahora()} />
+          <BuyBox variants={p.variants} currency={p.currency} freeFrom={shipping.gratisDesde} promos={promos} renderedAt={ahora()} productId={productId}
+productTitle={p.title}/>
         ) : (
           <p className="note">Producto agotado por ahora.</p>
         )}

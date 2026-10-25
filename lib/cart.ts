@@ -15,6 +15,7 @@ export type CartLine = {
   discount: number; // lo que descuenta un código en esta línea (0 si no hay)
   total: number; // subtotal − discount
   currency: string;
+  productId: string;
 };
 export type CartCode = { code: string; applicable: boolean }; // applicable=false: Shopify no lo acepta para este carrito
 export type Cart = {
@@ -43,7 +44,7 @@ type RawCart = {
       quantity: number;
       cost: { subtotalAmount: Money; totalAmount: Money };
       discountAllocations: { discountedAmount: Money }[];
-      merchandise: { title?: string; price?: Money; image?: { url: string; altText: string | null } | null; product?: { title: string; handle: string } };
+      merchandise: { title?: string; price?: Money; image?: { url: string; altText: string | null } | null; product?: { id: string; title: string; handle: string } };
     }[];
   };
 };
@@ -71,7 +72,7 @@ const FIELDS = `
       id quantity
       cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
       discountAllocations { discountedAmount { amount currencyCode } }
-      merchandise { ... on ProductVariant { title price { amount currencyCode } image { url altText } product { title handle } } }
+      merchandise { ... on ProductVariant { title price { amount currencyCode } image { url altText } product { id title handle } } }
     }
   }`;
 
@@ -81,6 +82,7 @@ const toCart = (c: RawCart, warnings: string[] = []): Cart => {
     const subtotal = Number(l.cost.subtotalAmount.amount);
     const discount = l.discountAllocations.reduce((s, a) => s + Number(a.discountedAmount.amount), 0);
     return {
+      productId: (l.merchandise.product?.id ?? "").split("/").pop() ?? "",
       id: l.id,
       quantity: l.quantity,
       title: l.merchandise.product?.title ?? l.merchandise.title ?? "Producto",
